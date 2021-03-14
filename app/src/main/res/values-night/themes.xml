@@ -1,0 +1,41 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Theme.SmartContainer" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">@color/purple_200</item>
+        <item name="colorPrimaryVariant">@color/purple_700</item>
+        <item name="colorOnPrimary">@color/black</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/teal_200</item>
+        <item name="colorSecondaryVariant">@color/teal_200</item>
+        <item name="colorOnSecondary">@color/black</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
+        <!-- Customize your theme here. -->
+        <item name="android:lineSpacingMultiplier">1.1</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:listDivider">@drawable/divider</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="cardViewStyle">@style/CardView</item>
+    </style>
+    <style name="AppTheme.TextAppearance" parent="android:TextAppearance">
+        <item name="fontPath">fonts/helvetica_normal.ttf</item>
+    </style>
+    <style name="AppTheme.TextAppearance.Bold" parent="AppTheme.TextAppearance">
+        <item name="fontPath">fonts/helvetica_bold.ttf</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="AppTheme.TextAppearance.Light" parent="AppTheme.TextAppearance">
+        <item name="fontPath">fonts/helvetica_neue_light.ttf</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+    <style name="NavigationView">
+        <item name="android:textColorSecondary">@color/colorAccent</item>
+    </style>
+    <style name="ThemeOverlay.MyApp.ActionBar" parent="ThemeOverlay.AppCompat.ActionBar">
+        <item name="android:textColorPrimary">@color/white</item>
+    </style>
+    <style name="Toolbar.TitleText" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">
+        <item name="android:textSize">16sp</item>
+    </style>
+</resources>

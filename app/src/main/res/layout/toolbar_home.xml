@@ -1,0 +1,59 @@
+<androidx.appcompat.widget.Toolbar
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/toolbar"
+    android:layout_width="match_parent"
+    android:layout_height="?attr/actionBarSize"
+    android:background="?attr/colorPrimary"
+    app:titleTextAppearance="@style/Toolbar.TitleText"
+    android:theme="@style/ThemeOverlay.MyApp.ActionBar">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <ImageView
+            android:id="@+id/logOutIcon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:src="@drawable/ic_baseline_keyboard_return_24" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textSize="16sp"
+            android:textColor="@color/white"
+            android:text="Smart container"/>
+        <RelativeLayout
+            android:id="@+id/notifyView"
+            android:layout_width="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:paddingEnd="10dp"
+            android:layout_centerVertical="true"
+            android:layout_height="30dp"
+            tools:ignore="RtlSymmetry">
+
+            <ImageView
+                android:id="@+id/notifyIcon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_baseline_notifications_24" />
+            <TextView
+                android:layout_width="17dp"
+                android:layout_height="17dp"
+                android:text="6"
+                android:layout_alignParentTop="true"
+                android:layout_toRightOf="@id/notifyIcon"
+                android:gravity="center"
+                android:layout_marginLeft="-10dp"
+                android:textSize="12sp"
+                android:textColor="@color/white"
+                android:background="@drawable/circle_red"
+                android:layout_marginStart="-10dp"
+                android:layout_toEndOf="@id/notifyIcon" />
+        </RelativeLayout>
+
+    </RelativeLayout>
+</androidx.appcompat.widget.Toolbar>
+

@@ -1,0 +1,58 @@
+<resources>
+    <string name="app_name">SmartContainer</string>
+    <string name="next">NEXT</string>
+    <string name="skip">SKIP</string>
+    <string name="start">JOIN</string>
+    <string name="slide_1_title">Get Notified</string>
+    <string name="slide_1_desc">Smart container will remind you of any item thats about to get exhuasted</string>
+
+    <string name="slide_2_title">Shopping List</string>
+    <string name="slide_2_desc">Smart container will create a shopping list of all items that are out of stock.</string>
+
+    <string name="slide_3_title">Meal Suggestion</string>
+    <string name="slide_3_desc">Based on the food ingredients available, smart container can suggest meals for you to prepare.</string>
+
+    <string name="slide_4_title">Object detection</string>
+    <string name="slide_4_desc">Through its powerful AI algorithm, smart container can detect names of items.</string>
+    <string name="welcome">Welcome To Smart Container</string>
+    <string name="access">Access account with</string>
+    <string name="facebook">Facebook</string>
+    <string name="google">Google</string>
+    <string name="email">Email</string>
+    <string name="guest">Guest</string>
+    <string name="by_joining">By registering, you agree to Smart Container\'s </string>
+    <string name="by_joining_terms">Terms of Service</string>
+    <string name="facebook_app_id">678408769496360</string>
+    <string name="fb_login_protocol_scheme">fb678408769496360</string>
+    <string name="google_server_client_id">376846167897-jdrh1pkh508ihlv4j0rhqs0ih335k686.apps.googleusercontent.com</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="accuracy">Please check your input for accuracy.</string>
+    <string name="error_failed">Request failed. Try again later.</string>
+    <string-array name="array_state">
+        <item>Select State Of The Item</item>
+        <item>Solid</item>
+        <item>Liquid</item>
+        <item>Gas</item>
+    </string-array>
+    <string-array name="array_count">
+        <item>Is This Item Countable?</item>
+        <item>Yes</item>
+        <item>No</item>
+    </string-array>
+    <string-array name="array_edible">
+        <item>Is This Item Edible?</item>
+        <item>Yes</item>
+        <item>No</item>
+    </string-array>
+    <string name="permission_title">Permission needed</string>
+    <string name="permission_loaction_access">Location permission is needed to set location of your store.</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="unable_to_get_location">We are unable to get your location. Make sure you have given this app permision to access location and your GPS is enabled.</string>
+    <string name="permission_storage_access">Storage permission is needed. Kindly enable permission.</string>
+    <string name="permission_loaction_string">Location permission is needed to search for solutions near you.</string>
+</resources>
