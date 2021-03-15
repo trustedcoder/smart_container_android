@@ -11,4 +11,6 @@ public class AppConfig {
     public static String UPDATE_WHOLE_APP = HOST+"app/update_whole_app";
     public static String ADD_CONTAINER_ONE= HOST+"container/add_container_one";
     public static String DETECT_OBJECT= HOST+"container/detect_object";
+    public static String ADD_CONTAINER_TWO= HOST+"container/add_container_two";
+    public static String CHECK_FOR_ONE= HOST+"container/check_for_one";
 }

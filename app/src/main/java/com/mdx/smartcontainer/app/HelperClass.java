@@ -44,13 +44,6 @@ public class HelperClass {
         }
     }
 
-
-    public static Boolean checkForxSpace(String my){
-        Pattern pattern = Pattern.compile("\\s");
-        Matcher matcher = pattern.matcher(my);
-        return  matcher.find();
-    }
-
     public static void updateUserDetails(final Activity activity) {
         final SessionManager sessionManager = new SessionManager(activity.getApplicationContext());
         Map<String, String> params = new HashMap<String, String>();
@@ -64,17 +57,15 @@ public class HelperClass {
                         int status = response.getInt("status");
                         if (status == 1) {
                             sessionManager.setEmail(response.getString("email"));
-                            sessionManager.setEmailVerified(response.getBoolean("is_email_verified"));
-                            sessionManager.setUsername(response.getString("username"));
-                            sessionManager.setImage(response.getString("image"));
+                            sessionManager.setTotalNotify(response.getInt("total_notify"));
+                            sessionManager.setFullname(response.getString("fullname"));
 
                         }
                         else {
                             if (sessionManager.isLoggedIn()){
                                 sessionManager.setEmail("");
-                                sessionManager.setEmailVerified(true);
-                                sessionManager.setUsername("");
-                                sessionManager.setImage("no_pix.png");
+                                sessionManager.setTotalNotify(0);
+                                sessionManager.setFullname("");
                                 sessionManager.setAuth("");
                                 sessionManager.setLogin(false);
                                 final AlertDialog.Builder builder =  new AlertDialog.Builder(activity);
@@ -115,16 +106,5 @@ public class HelperClass {
         };
 
         AppController.getInstance().addToRequestQueue(jsonRequest);
-    }
-
-    public static void hideKeyboard(Activity activity) {
-        InputMethodManager imm = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
-        //Find the currently focused view, so we can grab the correct window token from it.
-        View view = activity.getCurrentFocus();
-        //If no view currently has focus, create a new one, just so we can grab a window token from it
-        if (view == null) {
-            view = new View(activity);
-        }
-        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 }

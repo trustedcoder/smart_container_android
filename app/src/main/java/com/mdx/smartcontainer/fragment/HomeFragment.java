@@ -1,6 +1,7 @@
 package com.mdx.smartcontainer.fragment;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
@@ -57,6 +58,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -77,9 +81,9 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
     private MyAdapter mAdapter;
 
     private AlertDialog.Builder alertDialogBuilder;
-    private AlertDialog alertDialogAddContainerOne,alertDialogAddContainerTwo;
+    private AlertDialog alertDialogAddContainerOne,alertDialogAddContainerTwo,alertDialogAddContainerThree;
     private FloatingActionButton addContainer;
-    private View oneView,twoView;
+    private View oneView,twoView,threeView;
     LayoutInflater inflaterd;
     private int PICK_IMAGE_ITEM = 1;
     private int PICK_IMAGE_ITEM_CROP = 2;
@@ -88,6 +92,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
     private ProgressDialog progressDialog;
     private String content_type1;
     private String container_id_main;
+
 
     //For the adapter use
     private Boolean loading = true;
@@ -98,6 +103,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
     private LinearLayout container;
     private LinearLayout error_image;
     private Button try_again_button;
+
+    private ScheduledExecutorService foregroundScheduler = null;
 
     public static HomeFragment newInstance() {
         HomeFragment fragment = new HomeFragment();
@@ -134,7 +141,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 
         myList.add(new ContainerModel());
         myList.add(new ContainerModel());
-//        myList.add(new ContainerModel());
+//      myList.add(new ContainerModel());
 
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -242,12 +249,52 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
                 }
                 else {
                     alertDialogAddContainerTwo.cancel();
-
+                    try {
+                        addContainerTwo(container_id_main,name, iscountable);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
                 }
 
             }
         });
         alertDialogAddContainerTwo.show();
+    }
+
+    private void setUpThreeDialog(Boolean is_countable){
+        threeView = inflaterd.inflate(R.layout.dialog_put_container3, null);
+        Button btnContinue = threeView.findViewById(R.id.btnContinue);
+        TextView itemMessage = threeView.findViewById(R.id.message);
+        TextView reading = threeView.findViewById(R.id.reading);
+
+        if(is_countable){
+            itemMessage.setText("Place one of the item in the container");
+        }
+        else {
+            itemMessage.setText("Place all item in the container");
+        }
+
+        //Set up the Dialog
+        alertDialogBuilder.setView(threeView);
+        alertDialogAddContainerThree = alertDialogBuilder.create();
+        alertDialogAddContainerThree.setCancelable(false);
+
+        startSchedule(getActivity(),container_id_main,reading);
+
+        btnContinue.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                alertDialogAddContainerThree.cancel();
+                stopSchedule();
+//                try {
+//                    calibrate(container_id_main);
+//                } catch (JSONException e) {
+//                    e.printStackTrace();
+//                }
+
+            }
+        });
+        alertDialogAddContainerThree.show();
     }
 
     private void requestPermission(final String permission,final String permission2, String rationale, final int requestCode) {
@@ -507,7 +554,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
     }
 
     private void uploadImageDetect(String container_id, File file,String content_type){
-        showDialog("Please wait...");
+        showDialog("Detecting object...");
         OkHttpClient okHttpClient = new OkHttpClient();
 
         RequestBody requestBody = new MultipartBody.Builder()
@@ -588,5 +635,115 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         });
 
 
+    }
+
+    private void addContainerTwo(String container_id, String name, String is_countable) throws JSONException {
+        showDialog("Please wait...");
+        Boolean is_countable_v = false;
+        if(is_countable.equals("Yes")){
+            is_countable_v = true;
+        }
+        JSONObject params = new JSONObject();
+        params.put("name_item", name);
+        params.put("is_countable", is_countable_v);
+        params.put("container_id", container_id);
+
+
+        JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.POST, AppConfig.ADD_CONTAINER_TWO,params, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                hideDialog();
+                try {
+                    if (response.has("status")){
+                        int status = response.getInt("status");
+                        if (status == 1) {
+                            setUpThreeDialog(response.getBoolean("is_countable"));
+                        }
+                        else {
+                            MyDialogBuilders.displayPromptForError(getActivity(),response.getString("message"));
+                        }
+                    }
+                    else {
+                        MyDialogBuilders.displayPromptForError(getActivity(),getResources().getString(R.string.accuracy));
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        }, new Response.ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                hideDialog();
+                MyDialogBuilders.displayPromptForError(getActivity(),"Error connecting "+error.getMessage());
+            }
+        }){
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String>  params = new HashMap<String, String>();
+                params.put("authorization", sessionManager.getAuth());
+                return params;
+            }
+        };
+
+        AppController.getInstance().addToRequestQueue(jsonRequest);
+    }
+
+    private void check_for_one(String container_id, TextView reading){
+        JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, AppConfig.CHECK_FOR_ONE+"?container_id="+container_id,null, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                try {
+                    if (response.has("status")){
+                        int status = response.getInt("status");
+                        if (status == 1) {
+                            reading.setText(response.getString("current_reading"));
+                        }
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        }, new Response.ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+            }
+        }){
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String>  params = new HashMap<String, String>();
+                params.put("authorization", sessionManager.getAuth());
+                return params;
+            }
+        };
+
+        AppController.getInstance().addToRequestQueue(jsonRequest);
+    }
+
+    public void startSchedule(final Activity activity,String container_id, TextView reading){
+        if(foregroundScheduler == null){
+            foregroundScheduler = Executors.newSingleThreadScheduledExecutor();
+            foregroundScheduler.scheduleAtFixedRate(new Runnable() {
+                public void run() {
+                    activity.runOnUiThread(new Runnable() {
+                        public void run() {
+                            check_for_one(container_id, reading);
+                        }
+                    });
+                }
+            }, 5, 5, TimeUnit.SECONDS);
+        }
+    }
+
+    public void stopSchedule(){
+        if (!(foregroundScheduler == null)){
+            foregroundScheduler.shutdownNow();
+            foregroundScheduler = null;
+        }
     }
 }

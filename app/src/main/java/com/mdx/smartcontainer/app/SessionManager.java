@@ -12,9 +12,8 @@ public class SessionManager {
     private static final String PREF_NAME = "smartcontainer";
     private static final String KEY_AUTH = "session";
     private static final String KEY_IS_LOGGEDIN = "isLoggedIn";
-    private static final String KEY_USERNAME = "username";
-    private static final String KEY_IS_EMAIL_VERIFIED = "is_email_verified";
-    private static final String KEY_IMAGE = "image";
+    private static final String KEY_FULLNAME = "fullname";
+    private static final String KEY_TOTAL_NOTIFY = "total_notify";
     private static final String KEY_EMAIL = "email";
 
     public SessionManager(Context context) {
@@ -41,33 +40,23 @@ public class SessionManager {
         return pref.getBoolean(KEY_IS_LOGGEDIN, false);
     }
 
-    public void setUsername(String data) {
-        editor.putString(KEY_USERNAME, data);
+    public void setFullname(String data) {
+        editor.putString(KEY_FULLNAME, data);
         editor.commit();
     }
 
-    public String getUsername(){
-        return pref.getString(KEY_USERNAME, "");
+    public String getFullname(){
+        return pref.getString(KEY_FULLNAME, "");
     }
 
-    public void setEmailVerified(boolean data) {
-        editor.putBoolean(KEY_IS_EMAIL_VERIFIED, data);
+    public void setTotalNotify(int data) {
+        editor.putInt(KEY_TOTAL_NOTIFY, data);
         editor.commit();
     }
 
-    public boolean isEmailVerified(){
-        return pref.getBoolean(KEY_IS_EMAIL_VERIFIED, true);
+    public int getTotalNotify(){
+        return pref.getInt(KEY_TOTAL_NOTIFY, 0);
     }
-
-    public void setImage(String data) {
-        editor.putString(KEY_IMAGE, data);
-        editor.commit();
-    }
-
-    public String getImage(){
-        return pref.getString(KEY_IMAGE, "no_pix.png");
-    }
-
 
     public void setEmail(String data) {
         editor.putString(KEY_EMAIL, data);

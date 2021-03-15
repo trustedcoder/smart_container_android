@@ -12,6 +12,10 @@ import com.android.volley.toolbox.Volley;
 import com.facebook.FacebookSdk;
 import com.facebook.appevents.AppEventsLogger;
 import com.mdx.smartcontainer.R;
+import com.mdx.smartcontainer.activity.IntroActivity;
+import com.mdx.smartcontainer.activity.SplashActivity;
+import com.mdx.smartcontainer.activity.SplashExtendActivity;
+import com.mdx.smartcontainer.activity.WelcomeActivity;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -38,6 +42,7 @@ public class AppController extends Application {
                                 .setFontAttrId(R.attr.fontPath)
                                 .build()))
                 .build());
+        registerActivityLifecycleCallbacks(new MyActivityLifecycleCallbacks());
         mInstance = this;
         FacebookSdk.sdkInitialize(getApplicationContext());
         AppEventsLogger.activateApp(this);
@@ -79,7 +84,7 @@ public class AppController extends Application {
         }
     }
 
-    public void startScheduleGetUserDetails(final Activity activity){
+    public void startSchedule(final Activity activity){
         if(foregroundScheduler == null){
             foregroundScheduler = Executors.newSingleThreadScheduledExecutor();
             foregroundScheduler.scheduleAtFixedRate(new Runnable() {
@@ -99,6 +104,94 @@ public class AppController extends Application {
         if (!(foregroundScheduler == null)){
             foregroundScheduler.shutdownNow();
             foregroundScheduler = null;
+        }
+    }
+
+    public class MyActivityLifecycleCallbacks implements ActivityLifecycleCallbacks {
+
+        public void onActivityCreated(final Activity activity, Bundle bundle) {
+
+            if(activity instanceof WelcomeActivity){
+
+            }
+            else if (activity instanceof SplashActivity){
+
+            }
+            else if (activity instanceof SplashExtendActivity){
+
+            }
+            else if (activity instanceof IntroActivity){
+
+            }
+            else {
+                startSchedule(activity);
+            }
+        }
+
+        public void onActivityDestroyed(Activity activity) {
+
+        }
+
+        public void onActivityPaused(Activity activity) {
+            if(activity instanceof WelcomeActivity){
+
+            }
+            else if (activity instanceof SplashActivity){
+
+            }
+            else if (activity instanceof SplashExtendActivity){
+
+            }
+            else if (activity instanceof IntroActivity){
+
+            }
+            else {
+                stopScheduleGetUserDetails();
+            }
+        }
+
+        public void onActivityResumed(final Activity activity) {
+            if(activity instanceof WelcomeActivity){
+
+            }
+            else if (activity instanceof SplashActivity){
+
+            }
+            else if (activity instanceof SplashExtendActivity){
+
+            }
+            else if (activity instanceof IntroActivity){
+
+            }
+            else {
+                startSchedule(activity);
+            }
+        }
+
+        public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
+
+        }
+
+        public void onActivityStarted(final Activity activity) {
+            if(activity instanceof WelcomeActivity){
+
+            }
+            else if (activity instanceof SplashActivity){
+
+            }
+            else if (activity instanceof SplashExtendActivity){
+
+            }
+            else if (activity instanceof IntroActivity){
+
+            }
+            else {
+                startSchedule(activity);
+            }
+        }
+
+        public void onActivityStopped(Activity activity) {
+
         }
     }
 
