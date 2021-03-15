@@ -279,19 +279,16 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         alertDialogAddContainerThree = alertDialogBuilder.create();
         alertDialogAddContainerThree.setCancelable(false);
 
-        startSchedule(getActivity(),container_id_main,reading);
+        startSchedule(getActivity(),container_id_main,reading,itemMessage);
 
         btnContinue.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                alertDialogAddContainerThree.cancel();
-                stopSchedule();
-//                try {
-//                    calibrate(container_id_main);
-//                } catch (JSONException e) {
-//                    e.printStackTrace();
-//                }
-
+                try {
+                    calibrate(container_id_main);
+                } catch (JSONException e) {
+                    MyDialogBuilders.displayPromptForError(getActivity(),e.toString());
+                }
             }
         });
         alertDialogAddContainerThree.show();
@@ -691,7 +688,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         AppController.getInstance().addToRequestQueue(jsonRequest);
     }
 
-    private void check_for_one(String container_id, TextView reading){
+    private void check_for_one(String container_id, TextView reading, TextView messageTxt){
         JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, AppConfig.CHECK_FOR_ONE+"?container_id="+container_id,null, new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject response) {
@@ -700,6 +697,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
                         int status = response.getInt("status");
                         if (status == 1) {
                             reading.setText(response.getString("current_reading"));
+                            messageTxt.setText(response.getString("message"));
+
                         }
                     }
 
@@ -725,14 +724,14 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         AppController.getInstance().addToRequestQueue(jsonRequest);
     }
 
-    public void startSchedule(final Activity activity,String container_id, TextView reading){
+    public void startSchedule(final Activity activity,String container_id, TextView reading, TextView messageTxt){
         if(foregroundScheduler == null){
             foregroundScheduler = Executors.newSingleThreadScheduledExecutor();
             foregroundScheduler.scheduleAtFixedRate(new Runnable() {
                 public void run() {
                     activity.runOnUiThread(new Runnable() {
                         public void run() {
-                            check_for_one(container_id, reading);
+                            check_for_one(container_id, reading, messageTxt);
                         }
                     });
                 }
@@ -745,5 +744,48 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
             foregroundScheduler.shutdownNow();
             foregroundScheduler = null;
         }
+    }
+
+
+    private void calibrate(String container_id) throws JSONException{
+        showDialog("Calibrating ...");
+        JSONObject params = new JSONObject();
+        params.put("container_id", container_id);
+        JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.POST, AppConfig.CALIBRATE,params, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                hideDialog();
+                try {
+                    if (response.has("status")){
+                        int status = response.getInt("status");
+                        if (status == 1) {
+                            alertDialogAddContainerThree.cancel();
+                            stopSchedule();
+                        }
+                        MyDialogBuilders.displayPromptForError(getActivity(),response.getString("message"));
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        }, new Response.ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                hideDialog();
+                MyDialogBuilders.displayPromptForError(getActivity(),"Error connecting "+error.getMessage());
+            }
+        }){
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String>  params = new HashMap<String, String>();
+                params.put("authorization", sessionManager.getAuth());
+                return params;
+            }
+        };
+
+        AppController.getInstance().addToRequestQueue(jsonRequest);
     }
 }
