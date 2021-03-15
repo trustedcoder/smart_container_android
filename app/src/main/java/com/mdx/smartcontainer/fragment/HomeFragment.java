@@ -45,10 +45,12 @@ import com.mdx.smartcontainer.app.HelperClass;
 import com.mdx.smartcontainer.app.MyDialogBuilders;
 import com.mdx.smartcontainer.app.SessionManager;
 import com.mdx.smartcontainer.model.ContainerModel;
+import com.squareup.picasso.Picasso;
 import com.theartofdev.edmodo.cropper.CropImage;
 import com.theartofdev.edmodo.cropper.CropImageView;
 
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -103,6 +105,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
     private LinearLayout container;
     private LinearLayout error_image;
     private Button try_again_button;
+    private ImageView imageError;
+    private TextView textError;
 
     private ScheduledExecutorService foregroundScheduler = null;
 
@@ -132,16 +136,16 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         indeterminate_progress =rootView.findViewById(R.id.navigation);
         addContainer = rootView.findViewById(R.id.addContainer);
         addContainer.setOnClickListener(this);
+
+        pageCount = 0;
+        myList.clear();
         mRecyclerView = rootView.findViewById(R.id.recycleView);
         mRecyclerView.setHasFixedSize(false);
         final LinearLayoutManager mLayoutManager = new LinearLayoutManager(getActivity());
         mRecyclerView.setLayoutManager(mLayoutManager);
         mAdapter = new MyAdapter(myList);
         mRecyclerView.setAdapter(mAdapter);
-
-        myList.add(new ContainerModel());
-        myList.add(new ContainerModel());
-//      myList.add(new ContainerModel());
+        getContainers();
 
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -153,7 +157,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
                 if (lastvisibleitemposition == mAdapter.getItemCount() - 1) {
                     if (!loading && !isLastPage) {
                         loading = true;
-                        //loadMyInbox();
+                        getContainers();
                     }
                 }
             }
@@ -164,6 +168,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         error_image = rootView.findViewById(R.id.error_image);
         container = rootView.findViewById(R.id.container);
         try_again_button = rootView.findViewById(R.id.try_again_button);
+        imageError = rootView.findViewById(R.id.imageError);
+        textError = rootView.findViewById(R.id.textError);
         try_again_button.setOnClickListener(this);
 
         progressDialog = new ProgressDialog(getActivity());
@@ -365,6 +371,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.try_again_button){
+            assert getFragmentManager() != null;
             FragmentTransaction ft = getFragmentManager().beginTransaction();
             ft.detach(this).attach(this).commit();
         }else if (id == R.id.addContainer){
@@ -420,7 +427,15 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
             if (holder instanceof ItemViewHolder) {
                 ItemViewHolder itemViewHolder = (ItemViewHolder) holder;
                 dataModel = dataList.get(position);
+                itemViewHolder.container_name.setText(dataModel.getName_container());
+                itemViewHolder.remaining.setText("Remaining : "+dataModel.getRemaining());
+                itemViewHolder.percent.setText(dataModel.getPercentage()+"%");
+                itemViewHolder.item.setText("Item : "+dataModel.getName_item());
 
+                Picasso.with(getContext()).load(dataModel.getImage())
+                        .placeholder(R.drawable.no_image)
+                        .error(R.drawable.no_image)
+                        .into(itemViewHolder.container_image);
             }
             else if (holder instanceof FooterViewHolder) {
                 FooterViewHolder footerViewHolder = (FooterViewHolder) holder;
@@ -746,7 +761,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         }
     }
 
-
     private void calibrate(String container_id) throws JSONException{
         showDialog("Calibrating ...");
         JSONObject params = new JSONObject();
@@ -787,5 +801,89 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         };
 
         AppController.getInstance().addToRequestQueue(jsonRequest);
+    }
+
+    private void getContainers(){
+        JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, AppConfig.GET_CONTAINERS+"?start="+pageCount,null, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                try {
+                    if (response.has("status")){
+                        int status = response.getInt("status");
+                        if (status == 1) {
+                            isLastPage = response.getBoolean("is_last_page");
+                            pageCount = pageCount+20;
+                            JSONArray ja = response.getJSONArray("data");
+                            if (ja.length() > 0){
+                                for (int i = 0; i < ja.length(); i++) {
+                                    JSONObject jobj = ja.getJSONObject(i);
+                                    String name_item = jobj.getString("name_item");
+                                    String remaining = jobj.getString("remaining");
+                                    String name_container = jobj.getString("name_container");
+                                    String image = jobj.getString("image");
+                                    String percentage = jobj.getString("percentage");
+                                    String public_id = jobj.getString("public_id");
+                                    ContainerModel containerModel = new ContainerModel(name_item,remaining,name_container,percentage,public_id,image);
+                                    myList.add(containerModel);
+
+                                }
+                                mAdapter.notifyDataSetChanged();
+                                loading = false;
+                                loadingSuccess();
+                            }
+                            else {
+                                loadingFailed(response.getString("message"),true);
+                            }
+                        }
+                        else {
+                            loadingFailed(response.getString("message"),false);
+                        }
+                    }
+                    else {
+                        loadingFailed("Server error",false);
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        }, new Response.ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                loadingFailed("Server error",false);
+            }
+        }){
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String>  params = new HashMap<String, String>();
+                params.put("authorization", sessionManager.getAuth());
+                return params;
+            }
+        };
+
+        AppController.getInstance().addToRequestQueue(jsonRequest);
+    }
+
+    private void loadingFailed(String message, Boolean is_list_empty){
+        container.setVisibility(View.GONE);
+        indeterminate_progress.setVisibility(View.GONE);
+        error_image.setVisibility(View.VISIBLE);
+        textError.setText(message);
+        if(is_list_empty){
+            imageError.setVisibility(View.GONE);
+            try_again_button.setVisibility(View.GONE);
+        }
+        else {
+            imageError.setVisibility(View.VISIBLE);
+            try_again_button.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void loadingSuccess(){
+        container.setVisibility(View.VISIBLE);
+        indeterminate_progress.setVisibility(View.GONE);
+        error_image.setVisibility(View.GONE);
     }
 }
