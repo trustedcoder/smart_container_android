@@ -15,6 +15,7 @@ public class SessionManager {
     private static final String KEY_FULLNAME = "fullname";
     private static final String KEY_TOTAL_NOTIFY = "total_notify";
     private static final String KEY_EMAIL = "email";
+    private static final String KEY_FCM_TOKEN = "fcm_token";
 
     public SessionManager(Context context) {
         this._context = context;
@@ -65,6 +66,15 @@ public class SessionManager {
 
     public String getEmail(){
         return pref.getString(KEY_EMAIL, "");
+    }
+
+    public void setToken(String data) {
+        editor.putString(KEY_FCM_TOKEN, data);
+        editor.commit();
+    }
+
+    public String getToken(){
+        return pref.getString(KEY_FCM_TOKEN, "empty");
     }
 
 }

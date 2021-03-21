@@ -47,7 +47,7 @@ public class HelperClass {
     public static void updateUserDetails(final Activity activity) {
         final SessionManager sessionManager = new SessionManager(activity.getApplicationContext());
         Map<String, String> params = new HashMap<String, String>();
-        params.put("fcm_token", "fcm_token");
+        params.put("fcm_token", sessionManager.getToken());
         JSONObject parameters= new JSONObject(params);
         JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.POST, AppConfig.UPDATE_WHOLE_APP,parameters, new Response.Listener<JSONObject>() {
             @Override

@@ -40,6 +40,7 @@
                 android:layout_height="24dp"
                 android:src="@drawable/ic_baseline_notifications_24" />
             <TextView
+                android:id="@+id/numberNotify"
                 android:layout_width="17dp"
                 android:layout_height="17dp"
                 android:text="6"

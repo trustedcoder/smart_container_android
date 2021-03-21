@@ -7,6 +7,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -30,6 +31,7 @@ public class MainActivity extends AppCompatActivity {
     private BottomNavigationView navigation;
     private RelativeLayout notifyView;
     private ImageView logOutIcon;
+    private TextView numberNotify;
     HomeFragment homeFragment = HomeFragment.newInstance();
     ShoppingFragment shoppingFragment = ShoppingFragment.newInstance();
     MealFragment mealFragment = MealFragment.newInstance();
@@ -65,7 +67,21 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         Bungee.swipeLeft(MainActivity.this);
         setContentView(R.layout.activity_main);
+        numberNotify = findViewById(R.id.numberNotify);
         initializeViews();
+
+    }
+
+    @Override
+    public void onResume(){
+        super.onResume();
+        if (sessionManager.getTotalNotify() > 0){
+            numberNotify.setVisibility(View.VISIBLE);
+            numberNotify.setText(String.valueOf(sessionManager.getTotalNotify()));
+        }
+        else {
+            numberNotify.setVisibility(View.GONE);
+        }
 
     }
 
