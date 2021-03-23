@@ -16,12 +16,26 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.mdx.smartcontainer.R;
+import com.mdx.smartcontainer.app.AppConfig;
+import com.mdx.smartcontainer.app.AppController;
 import com.mdx.smartcontainer.app.SessionManager;
+import com.mdx.smartcontainer.model.ContainerModel;
 import com.mdx.smartcontainer.model.NotificationModel;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class NotificationActivity extends AppCompatActivity implements View.OnClickListener{
     private ProgressBar indeterminate_progress;
@@ -40,6 +54,8 @@ public class NotificationActivity extends AppCompatActivity implements View.OnCl
     private LinearLayout container;
     private LinearLayout error_image;
     private Button try_again_button;
+    private ImageView imageError;
+    private TextView textError;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,8 +63,8 @@ public class NotificationActivity extends AppCompatActivity implements View.OnCl
         setContentView(R.layout.activity_notification);
         toolbar =findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        toolbar.setTitle("Notification");
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setTitle("Notification");
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
@@ -61,7 +77,9 @@ public class NotificationActivity extends AppCompatActivity implements View.OnCl
 
     private void initializeView(){
         sessionManager = new SessionManager(getApplicationContext());
-        indeterminate_progress =findViewById(R.id.navigation);
+
+        pageCount = 0;
+        myList.clear();
         mRecyclerView = findViewById(R.id.recycleView);
         mRecyclerView.setHasFixedSize(false);
         final LinearLayoutManager mLayoutManager = new LinearLayoutManager(NotificationActivity.this);
@@ -69,8 +87,6 @@ public class NotificationActivity extends AppCompatActivity implements View.OnCl
         mAdapter = new MyAdapter(myList);
         mRecyclerView.setAdapter(mAdapter);
 
-        myList.add(new NotificationModel());
-        myList.add(new NotificationModel());
 
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -82,7 +98,7 @@ public class NotificationActivity extends AppCompatActivity implements View.OnCl
                 if (lastvisibleitemposition == mAdapter.getItemCount() - 1) {
                     if (!loading && !isLastPage) {
                         loading = true;
-                        //loadMyInbox();
+                        getNotifications();
                     }
                 }
             }
@@ -94,13 +110,19 @@ public class NotificationActivity extends AppCompatActivity implements View.OnCl
         container = findViewById(R.id.container);
         try_again_button = findViewById(R.id.try_again_button);
         try_again_button.setOnClickListener(this);
+        imageError = findViewById(R.id.imageError);
+        textError = findViewById(R.id.textError);
+        getNotifications();
     }
 
     @Override
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.try_again_button){
-            
+            loadingSuccess();
+            pageCount = 0;
+            myList.clear();
+            getNotifications();
         }
     }
 
@@ -152,6 +174,17 @@ public class NotificationActivity extends AppCompatActivity implements View.OnCl
             if (holder instanceof ItemViewHolder) {
                 ItemViewHolder itemViewHolder = (ItemViewHolder) holder;
                 dataModel = dataList.get(position);
+                if(dataModel.getImage() == 1){
+                    itemViewHolder.container_image.setImageDrawable(getResources().getDrawable(R.drawable.ic_baseline_inventory_red));
+                }
+                else if (dataModel.getImage() == 3){
+                    itemViewHolder.container_image.setImageDrawable(getResources().getDrawable(R.drawable.ic_baseline_inventory_green));
+                }
+                else {
+                    itemViewHolder.container_image.setImageDrawable(getResources().getDrawable(R.drawable.ic_baseline_inventory_orange));
+                }
+                itemViewHolder.container_name.setText(dataModel.getTitle());
+                itemViewHolder.remaining.setText(dataModel.getDate_ago());
 
             }
             else if (holder instanceof FooterViewHolder) {
@@ -176,7 +209,7 @@ public class NotificationActivity extends AppCompatActivity implements View.OnCl
 
         public class ItemViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
             public ImageView container_image;
-            public TextView container_name,remaining,item,percent;
+            public TextView container_name,remaining;
             public View view;
             public ItemViewHolder(View v) {
                 super(v);
@@ -184,8 +217,6 @@ public class NotificationActivity extends AppCompatActivity implements View.OnCl
                 container_image= v.findViewById(R.id.container_image);
                 container_name= v.findViewById(R.id.container_name);
                 remaining= v.findViewById(R.id.remaining);
-                item= v.findViewById(R.id.item);
-                percent= v.findViewById(R.id.percent);
                 view = v;
             }
 
@@ -193,7 +224,7 @@ public class NotificationActivity extends AppCompatActivity implements View.OnCl
             public void onClick(View view) {
                 dataModel = dataList.get(getAdapterPosition());
                 Intent intent = new Intent(getApplicationContext(), ContainerActivity.class);
-                intent.putExtra("container_id",1);
+                intent.putExtra("container_id", dataModel.getContainer_id());
                 startActivity(intent);
             }
         }
@@ -210,5 +241,92 @@ public class NotificationActivity extends AppCompatActivity implements View.OnCl
         }
 
 
+    }
+
+    private void getNotifications(){
+        if (pageCount == 0){
+            indeterminate_progress.setVisibility(View.VISIBLE);
+        }
+        JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, AppConfig.GET_NOTIFICATIONS+"?start="+pageCount,null, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                indeterminate_progress.setVisibility(View.GONE);
+                try {
+                    if (response.has("status")){
+                        int status = response.getInt("status");
+                        if (status == 1) {
+                            isLastPage = response.getBoolean("is_last_page");
+                            pageCount = pageCount+20;
+                            JSONArray ja = response.getJSONArray("data");
+                            if (ja.length() > 0){
+                                for (int i = 0; i < ja.length(); i++) {
+                                    JSONObject jobj = ja.getJSONObject(i);
+                                    String container_id = jobj.getString("container_id");
+                                    int image = jobj.getInt("image");
+                                    String title = jobj.getString("title");
+                                    String date_ago = jobj.getString("date_ago");
+                                    NotificationModel notificationModel = new NotificationModel(container_id, image, title, date_ago);
+                                    myList.add(notificationModel);
+
+                                }
+                                mAdapter.notifyDataSetChanged();
+                                loading = false;
+                                loadingSuccess();
+                            }
+                            else {
+                                loadingFailed(response.getString("message"),true);
+                            }
+                        }
+                        else {
+                            loadingFailed(response.getString("message"),false);
+                        }
+                    }
+                    else {
+                        loadingFailed("Server error",false);
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        }, new Response.ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                indeterminate_progress.setVisibility(View.GONE);
+                loadingFailed("Server error",false);
+            }
+        }){
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String>  params = new HashMap<String, String>();
+                params.put("authorization", sessionManager.getAuth());
+                return params;
+            }
+        };
+
+        AppController.getInstance().addToRequestQueue(jsonRequest);
+    }
+
+    private void loadingFailed(String message, Boolean is_list_empty){
+        container.setVisibility(View.GONE);
+        indeterminate_progress.setVisibility(View.GONE);
+        error_image.setVisibility(View.VISIBLE);
+        textError.setText(message);
+        if(is_list_empty){
+            imageError.setVisibility(View.GONE);
+            try_again_button.setVisibility(View.GONE);
+        }
+        else {
+            imageError.setVisibility(View.VISIBLE);
+            try_again_button.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void loadingSuccess(){
+        container.setVisibility(View.VISIBLE);
+        indeterminate_progress.setVisibility(View.GONE);
+        error_image.setVisibility(View.GONE);
     }
 }

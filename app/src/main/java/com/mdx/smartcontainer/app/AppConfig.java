@@ -15,4 +15,7 @@ public class AppConfig {
     public static String CHECK_FOR_ONE= HOST+"container/check_for_one";
     public static String CALIBRATE= HOST+"container/calibrate";
     public static String GET_CONTAINERS= HOST+"container/get_containers";
+    public static String GET_NOTIFICATIONS= HOST+"notification/get_notifications";
+    public static String VIEW_CONTAINER= HOST+"container/view_containers";
+    public static String DELETE_CONTAINER= HOST+"container/delete";
 }

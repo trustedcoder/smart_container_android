@@ -145,7 +145,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         mRecyclerView.setLayoutManager(mLayoutManager);
         mAdapter = new MyAdapter(myList);
         mRecyclerView.setAdapter(mAdapter);
-        getContainers();
+
 
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -176,6 +176,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         progressDialog.setIndeterminate(true);
         progressDialog.setCancelable(false);
         inflaterd = getLayoutInflater();
+        getContainers();
     }
 
     private void setUpOneDialog(){
@@ -476,7 +477,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
             public void onClick(View view) {
                 dataModel = dataList.get(getAdapterPosition());
                 Intent intent = new Intent(getContext(), ContainerActivity.class);
-                intent.putExtra("container_id",1);
+                intent.putExtra("container_id",dataModel.getPublic_id());
                 startActivity(intent);
             }
         }
@@ -804,9 +805,13 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
     }
 
     private void getContainers(){
+        if (pageCount == 0){
+            indeterminate_progress.setVisibility(View.VISIBLE);
+        }
         JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, AppConfig.GET_CONTAINERS+"?start="+pageCount,null, new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject response) {
+                indeterminate_progress.setVisibility(View.GONE);
                 try {
                     if (response.has("status")){
                         int status = response.getInt("status");
@@ -852,6 +857,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 
             @Override
             public void onErrorResponse(VolleyError error) {
+                indeterminate_progress.setVisibility(View.GONE);
                 loadingFailed("Server error",false);
             }
         }){
@@ -885,5 +891,14 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
         container.setVisibility(View.VISIBLE);
         indeterminate_progress.setVisibility(View.GONE);
         error_image.setVisibility(View.GONE);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        loadingSuccess();
+        pageCount = 0;
+        myList.clear();
+        getContainers();
     }
 }

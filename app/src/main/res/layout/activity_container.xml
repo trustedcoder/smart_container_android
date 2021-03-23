@@ -12,7 +12,21 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+        <ProgressBar
+            android:id="@+id/indeterminate_progress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:indeterminate="true"
+            android:paddingBottom="50dp"
+            android:visibility="visible"
+            android:layout_centerInParent="true"/>
+        <include
+            layout="@layout/error_loading"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"/>
         <LinearLayout
+            android:id="@+id/container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical">
@@ -30,14 +44,16 @@
                         android:gravity="center"
                         android:orientation="vertical">
                         <TextView
+                            android:id="@+id/itemName"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Rice"
                             android:textColor="@color/black"
                             android:textSize="13sp"/>
                         <ImageView
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
+                            android:id="@+id/image_name"
+                            android:layout_width="80dp"
+                            android:layout_height="80dp"
                             android:layout_centerVertical="true"
                             android:layout_marginTop="10dp"
                             android:layout_marginBottom="10dp"
@@ -64,8 +80,9 @@
                             android:textSize="13sp"/>
                         <at.grabner.circleprogress.CircleProgressView
                             android:id="@+id/percentFull"
-                            android:layout_width="50dp"
-                            android:layout_height="50dp"
+                            android:layout_width="80dp"
+                            android:layout_height="80dp"
+                            android:layout_marginTop="10dp"
                             android:layout_gravity="center"
                             app:cpv_rimWidth="5dp"
                             app:cpv_rimColor="@color/white_ash"
@@ -113,6 +130,7 @@
                             android:textColor="@color/black"
                             android:text="Capacity: "/>
                         <TextView
+                            android:id="@+id/capacity_name"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textSize="14sp"
@@ -130,6 +148,7 @@
                             android:textColor="@color/black"
                             android:text="Remaing: "/>
                         <TextView
+                            android:id="@+id/remaining_name"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textSize="14sp"
@@ -147,6 +166,7 @@
                             android:textColor="@color/black"
                             android:text="State: "/>
                         <TextView
+                            android:id="@+id/state_name"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textSize="14sp"
@@ -164,6 +184,7 @@
                             android:textColor="@color/black"
                             android:text="Countable: "/>
                         <TextView
+                            android:id="@+id/countable_name"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textSize="14sp"
@@ -181,6 +202,7 @@
                             android:textColor="@color/black"
                             android:text="Quantity remaining: "/>
                         <TextView
+                            android:id="@+id/quantity_name"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:textSize="14sp"
@@ -195,7 +217,7 @@
                 android:layout_marginLeft="10dp"
                 android:layout_marginTop="10dp"
                 android:textColor="@color/black"
-                android:text="Last 7days activity"/>
+                android:text="Last 7 days activity"/>
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -207,26 +229,56 @@
                     android:layout_height="wrap_content"
                     android:padding="10dp"
                     android:orientation="vertical">
-                    <com.github.mikephil.charting.charts.LineChart
+                    <org.eazegraph.lib.charts.ValueLineChart
+                        xmlns:app="http://schemas.android.com/apk/res-auto"
                         android:id="@+id/chart1"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_above="@+id/seekBar1" />
+                        android:layout_height="200dp"
+                        app:egUseCubic="true"
+                        app:egIndicatorTextColor="@color/black"
+                        app:egLegendColor="@color/black"
+                        app:egUseOverlapFill="true"
+                        app:egCurveSmoothness="0.4"
+                        app:egLegendTextSize="14sp"
+                        app:egIndicatorLineColor="#4CAF50"
+                        app:egLegendHeight="40dp"
+                        app:egShowStandardValue="true"/>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
         </LinearLayout>
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/addContainer"
+        <com.github.clans.fab.FloatingActionMenu
+            android:id="@+id/menu"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_alignParentRight="true"
-            android:layout_marginBottom="10dp"
-            app:rippleColor="@color/colorAccent"
-            app:background="@color/colorAccent"
-            app:backgroundTint="@color/colorAccent"
             android:layout_marginRight="10dp"
-            android:src="@drawable/ic_baseline_edit_24"
-            android:layout_alignParentEnd="true" />
+            android:layout_marginBottom="10dp"
+            android:layout_marginLeft="10dp"
+            app:menu_fab_size="normal"
+            app:menu_showShadow="true"
+            app:menu_shadowColor="#66000000"
+            app:menu_shadowRadius="4dp"
+            app:menu_shadowXOffset="1dp"
+            app:menu_shadowYOffset="3dp"
+            app:menu_colorNormal="#DA4336"
+            app:menu_colorPressed="#E75043"
+            app:menu_colorRipple="#99FFFFFF"
+            app:menu_animationDelayPerItem="50">
+            <com.github.clans.fab.FloatingActionButton
+                android:id="@+id/refill"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_baseline_inventory_2_24"
+                app:fab_size="mini"
+                app:fab_label="Refill" />
+            <com.github.clans.fab.FloatingActionButton
+                android:id="@+id/delete"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_baseline_delete_24"
+                app:fab_size="mini"
+                app:fab_label="Delete" />
+        </com.github.clans.fab.FloatingActionMenu>
     </RelativeLayout>
 </LinearLayout>
