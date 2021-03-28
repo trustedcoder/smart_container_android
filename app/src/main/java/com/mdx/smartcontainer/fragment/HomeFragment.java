@@ -433,7 +433,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
                 itemViewHolder.percent.setText(dataModel.getPercentage()+"%");
                 itemViewHolder.item.setText("Item : "+dataModel.getName_item());
 
-                Picasso.with(getContext()).load(dataModel.getImage())
+                Picasso.with(getContext()).load(AppConfig.HOST+dataModel.getImage())
                         .placeholder(R.drawable.no_image)
                         .error(R.drawable.no_image)
                         .into(itemViewHolder.container_image);

@@ -112,6 +112,7 @@ public class NotificationActivity extends AppCompatActivity implements View.OnCl
         try_again_button.setOnClickListener(this);
         imageError = findViewById(R.id.imageError);
         textError = findViewById(R.id.textError);
+        container.setVisibility(View.GONE);
         getNotifications();
     }
 

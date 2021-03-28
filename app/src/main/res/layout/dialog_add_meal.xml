@@ -16,9 +16,11 @@
                 android:layout_margin="5dp"
                 android:orientation="horizontal">
                 <RelativeLayout
+                    android:id="@+id/addImage"
                     android:layout_width="70dp"
                     android:layout_height="70dp">
                     <ImageView
+                        android:id="@+id/selectImage"
                         android:layout_width="70dp"
                         android:layout_height="70dp"
                         android:src="@drawable/ic_launcher_background"/>
@@ -48,7 +50,7 @@
                             android:layout_marginLeft="5dp"
                             android:layout_marginRight="5dp"
                             android:layout_weight="1"
-                            android:inputType="number"
+                            android:inputType="text"
                             android:hint="Meal name"
                             android:singleLine="true"/>
                     </com.google.android.material.textfield.TextInputLayout>
@@ -62,7 +64,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="5dp">
                         <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/nameContainer"
+                            android:id="@+id/cookTime"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:background="@color/white"
@@ -87,11 +89,31 @@
                     android:background="@color/background"
                     android:textColor="@color/black"
                     android:text="Ingredients"/>
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/recycleView"
-                    android:clipToPadding="false"
-                    android:layout_height="wrap_content"
-                    android:layout_width="match_parent"/>
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                    <ProgressBar
+                        android:id="@+id/progress_bar"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:indeterminate="true"
+                        android:paddingBottom="50dp"
+                        android:visibility="visible"
+                        android:layout_centerInParent="true"/>
+                    <TextView
+                        android:id="@+id/errorText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="30dp"
+                        android:layout_marginBottom="30dp"
+                        android:text="No error"
+                        android:layout_centerInParent="true"/>
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/recycleView"
+                        android:clipToPadding="false"
+                        android:layout_height="wrap_content"
+                        android:layout_width="match_parent"/>
+                </RelativeLayout>
             </LinearLayout>
             <Button
                 android:id="@+id/btnContinue"
