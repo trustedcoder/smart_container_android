@@ -99,20 +99,6 @@
                 android:paddingBottom="10dp"
                 android:orientation="horizontal"
                 android:gravity="center">
-                <TextView
-                    android:id="@+id/already"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/black"
-                    android:layout_gravity="center"
-                    android:text="Forgot password? "/>
-                <TextView
-                    android:id="@+id/forgot"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/colorAccent"
-                    android:layout_gravity="center"
-                    android:text="Click Here"/>
             </LinearLayout>
         </LinearLayout>
     </ScrollView>

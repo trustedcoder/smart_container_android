@@ -16,12 +16,26 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.mdx.smartcontainer.R;
+import com.mdx.smartcontainer.app.AppConfig;
+import com.mdx.smartcontainer.app.AppController;
 import com.mdx.smartcontainer.app.SessionManager;
 import com.mdx.smartcontainer.model.MealModel;
+import com.squareup.picasso.Picasso;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SuggestMealActivity extends AppCompatActivity  implements View.OnClickListener{
     private ProgressBar indeterminate_progress;
@@ -35,11 +49,15 @@ public class SuggestMealActivity extends AppCompatActivity  implements View.OnCl
     private Boolean loading = true;
     private Boolean isLastPage = false;
     private int pageCount=0;
+    private ImageView imageError;
+    private TextView textError;
 
     //for error
     private LinearLayout container;
     private LinearLayout error_image;
     private Button try_again_button;
+    public static String people= "0";
+    private Bundle extras;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +74,13 @@ public class SuggestMealActivity extends AppCompatActivity  implements View.OnCl
                 finish();
             }
         });
+        extras=getIntent().getExtras();
+        if (extras==null){
+            finish();
+        }
+        else {
+            people=extras.getString("people");
+        }
         initializeView();
     }
     private void initializeView(){
@@ -68,32 +93,16 @@ public class SuggestMealActivity extends AppCompatActivity  implements View.OnCl
         mAdapter = new MyAdapter(myList);
         mRecyclerView.setAdapter(mAdapter);
 
-        myList.add(new MealModel());
-        myList.add(new MealModel());
-//        myList.add(new ContainerModel());
-
-        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-                super.onScrollStateChanged(recyclerView, newState);
-
-                int lastvisibleitemposition = mLayoutManager.findLastVisibleItemPosition();
-
-                if (lastvisibleitemposition == mAdapter.getItemCount() - 1) {
-                    if (!loading && !isLastPage) {
-                        loading = true;
-                        //loadMyInbox();
-                    }
-                }
-            }
-        });
 
         //for errors
+        imageError = findViewById(R.id.imageError);
+        textError = findViewById(R.id.textError);
         indeterminate_progress = findViewById(R.id.indeterminate_progress);
         error_image = findViewById(R.id.error_image);
         container = findViewById(R.id.container);
         try_again_button = findViewById(R.id.try_again_button);
         try_again_button.setOnClickListener(this);
+        getMeals();
     }
 
     @Override
@@ -130,7 +139,7 @@ public class SuggestMealActivity extends AppCompatActivity  implements View.OnCl
         public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
 
             if (viewType == TYPE_ITEM) {
-                View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.items_notify, viewGroup, false);
+                View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.items_meal, viewGroup, false);
                 return new ItemViewHolder(view);
 
             }
@@ -152,17 +161,18 @@ public class SuggestMealActivity extends AppCompatActivity  implements View.OnCl
             if (holder instanceof ItemViewHolder) {
                 ItemViewHolder itemViewHolder = (ItemViewHolder) holder;
                 dataModel = dataList.get(position);
+                itemViewHolder.cookTime.setText("Cook time: "+dataModel.getCook_time());
+                itemViewHolder.meal_name.setText(dataModel.getName());
+                Picasso.with(getApplicationContext()).load(AppConfig.HOST+dataModel.getImage())
+                        .placeholder(R.drawable.no_image)
+                        .error(R.drawable.no_image)
+                        .into(itemViewHolder.meal_image);
 
             }
             else if (holder instanceof FooterViewHolder) {
                 FooterViewHolder footerViewHolder = (FooterViewHolder) holder;
                 footerViewHolder.progressBar.setIndeterminate(true);
-                if (isLastPage){
-                    footerViewHolder.progressBar.setVisibility(View.GONE);
-                }
-                else {
-                    footerViewHolder.progressBar.setVisibility(View.VISIBLE);
-                }
+                footerViewHolder.progressBar.setVisibility(View.GONE);
             }
 
 
@@ -174,27 +184,16 @@ public class SuggestMealActivity extends AppCompatActivity  implements View.OnCl
             return this.dataList.size();
         }
 
-        public class ItemViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
-            public ImageView container_image;
-            public TextView container_name,remaining,item,percent;
+        public class ItemViewHolder extends RecyclerView.ViewHolder{
+            public ImageView meal_image;
+            public TextView meal_name,cookTime;
             public View view;
             public ItemViewHolder(View v) {
                 super(v);
-                v.setOnClickListener(this);
-                container_image= v.findViewById(R.id.container_image);
-                container_name= v.findViewById(R.id.container_name);
-                remaining= v.findViewById(R.id.remaining);
-                item= v.findViewById(R.id.item);
-                percent= v.findViewById(R.id.percent);
+                meal_image = v.findViewById(R.id.meal_image);
+                meal_name = v.findViewById(R.id.meal_name);
+                cookTime = v.findViewById(R.id.cookTime);
                 view = v;
-            }
-
-            @Override
-            public void onClick(View view) {
-                dataModel = dataList.get(getAdapterPosition());
-                Intent intent = new Intent(getApplicationContext(), ContainerActivity.class);
-                intent.putExtra("container_id",1);
-                startActivity(intent);
             }
         }
 
@@ -210,5 +209,86 @@ public class SuggestMealActivity extends AppCompatActivity  implements View.OnCl
         }
 
 
+    }
+
+    private void getMeals(){
+        indeterminate_progress.setVisibility(View.VISIBLE);
+        JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, AppConfig.SUGGEST_MEAL_LIST+"?people_count="+people,null, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                indeterminate_progress.setVisibility(View.GONE);
+                try {
+                    if (response.has("status")){
+                        int status = response.getInt("status");
+                        if (status == 1) {
+                            JSONArray ja = response.getJSONArray("data");
+                            if (ja.length() > 0){
+                                for (int i = 0; i < ja.length(); i++) {
+                                    JSONObject jobj = ja.getJSONObject(i);
+                                    String meal_id = jobj.getString("meal_id");
+                                    String image = jobj.getString("image");
+                                    String name = jobj.getString("name");
+                                    String cook_time = jobj.getString("cook_time");
+                                    MealModel mealModel = new MealModel(meal_id,image,name,cook_time);
+                                    myList.add(mealModel);
+                                }
+                                mAdapter.notifyDataSetChanged();
+                                loadingSuccess();
+                            }
+                            else {
+                                loadingFailed(response.getString("message"),true);
+                            }
+                        }
+                        else {
+                            loadingFailed(response.getString("message"),false);
+                        }
+                    }
+                    else {
+                        loadingFailed("Server error",false);
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        }, new Response.ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                indeterminate_progress.setVisibility(View.GONE);
+                loadingFailed("Server error",false);
+            }
+        }){
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String>  params = new HashMap<String, String>();
+                params.put("authorization", sessionManager.getAuth());
+                return params;
+            }
+        };
+
+        AppController.getInstance().addToRequestQueue(jsonRequest);
+    }
+
+    private void loadingFailed(String message, Boolean is_list_empty){
+        container.setVisibility(View.GONE);
+        indeterminate_progress.setVisibility(View.GONE);
+        error_image.setVisibility(View.VISIBLE);
+        textError.setText(message);
+        if(is_list_empty){
+            imageError.setVisibility(View.GONE);
+            try_again_button.setVisibility(View.GONE);
+        }
+        else {
+            imageError.setVisibility(View.VISIBLE);
+            try_again_button.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void loadingSuccess(){
+        container.setVisibility(View.VISIBLE);
+        indeterminate_progress.setVisibility(View.GONE);
+        error_image.setVisibility(View.GONE);
     }
 }

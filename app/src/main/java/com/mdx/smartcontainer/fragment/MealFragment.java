@@ -93,10 +93,12 @@ public class MealFragment extends Fragment implements View.OnClickListener{
     private LinearLayout container;
     private LinearLayout error_image;
     private Button try_again_button;
+    private ImageView imageError;
+    private TextView textError;
 
     private AlertDialog.Builder alertDialogBuilder;
-    private AlertDialog alertDialogAddMeal;
-    private View addMealView;
+    private AlertDialog alertDialogAddMeal,alertDialogSuggestMeal;
+    private View addMealView,suggestMealView;
     LayoutInflater inflaterd;
     private FloatingActionButton add,suggest;
     private ProgressDialog progressDialog;
@@ -127,8 +129,9 @@ public class MealFragment extends Fragment implements View.OnClickListener{
     }
 
     private void initializeView(){
-        sessionManager = new SessionManager(getContext());
+        myList.clear();
         alertDialogBuilder = new AlertDialog.Builder(getActivity());
+        sessionManager = new SessionManager(getContext());
         inflaterd = getLayoutInflater();
         add = rootView.findViewById(R.id.add);
         add.setOnClickListener(this);
@@ -142,25 +145,7 @@ public class MealFragment extends Fragment implements View.OnClickListener{
         mAdapter = new MyAdapter(myList);
         mRecyclerView.setAdapter(mAdapter);
 
-        myList.add(new MealModel());
-        myList.add(new MealModel());
-//        myList.add(new ContainerModel());
 
-        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-                super.onScrollStateChanged(recyclerView, newState);
-
-                int lastvisibleitemposition = mLayoutManager.findLastVisibleItemPosition();
-
-                if (lastvisibleitemposition == mAdapter.getItemCount() - 1) {
-                    if (!loading && !isLastPage) {
-                        loading = true;
-                        //loadMyInbox();
-                    }
-                }
-            }
-        });
 
         progressDialog = new ProgressDialog(getActivity());
         progressDialog.setIndeterminate(true);
@@ -172,6 +157,9 @@ public class MealFragment extends Fragment implements View.OnClickListener{
         container = rootView.findViewById(R.id.container);
         try_again_button = rootView.findViewById(R.id.try_again_button);
         try_again_button.setOnClickListener(this);
+        imageError = rootView.findViewById(R.id.imageError);
+        textError = rootView.findViewById(R.id.textError);
+        getMeals();
     }
 
     @Override
@@ -181,11 +169,10 @@ public class MealFragment extends Fragment implements View.OnClickListener{
             FragmentTransaction ft = getFragmentManager().beginTransaction();
             ft.detach(this).attach(this).commit();
         }else if (id == R.id.add){
-            setUpAddMealDialog("0");
+            setUpAddMealDialog("0","","","");
         }
         else if (id == R.id.suggest){
-            Intent intent = new Intent(getContext(), SuggestMealActivity.class);
-            startActivity(intent);
+            setUpSuggestDialog();
         }
     }
 
@@ -257,10 +244,10 @@ public class MealFragment extends Fragment implements View.OnClickListener{
 
     }
 
-    private void setUpAddMealDialog(String meal_id){
+    private void setUpAddMealDialog(String meal_id, String image, String name, String cook_time){
         addMealView = inflaterd.inflate(R.layout.dialog_add_meal, null);
         selectImage = addMealView.findViewById(R.id.selectImage);
-
+        myListA.clear();
         RelativeLayout addImage = addMealView.findViewById(R.id.addImage);
         EditText meal_name = addMealView.findViewById(R.id.meal_name);
         EditText cookTime = addMealView.findViewById(R.id.cookTime);
@@ -268,15 +255,25 @@ public class MealFragment extends Fragment implements View.OnClickListener{
         TextView errorText = addMealView.findViewById(R.id.errorText);
         ProgressBar progressBar = addMealView.findViewById(R.id.progress_bar);
 
+        Picasso.with(getContext()).load(AppConfig.HOST+image)
+                .placeholder(R.drawable.no_image)
+                .error(R.drawable.no_image)
+                .into(selectImage);
+        meal_name.setText(name);
+        cookTime.setText(cook_time);
+
         recycleView.setHasFixedSize(false);
         final LinearLayoutManager mLayoutManager = new LinearLayoutManager(getActivity());
         recycleView.setLayoutManager(mLayoutManager);
-        mAdapterA = new MyAdapterA(myListA);
+        mAdapterA = new MyAdapterA();
         recycleView.setAdapter(mAdapterA);
 
         getIngredients(meal_id,progressBar,errorText);
 
         Button btnContinue = addMealView.findViewById(R.id.btnContinue);
+        if (!meal_id.equals("0")){
+            btnContinue.setVisibility(View.GONE);
+        }
 
         selectImage.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -299,7 +296,18 @@ public class MealFragment extends Fragment implements View.OnClickListener{
             public void onClick(View v) {
                 String name = meal_name.getText().toString().trim();
                 String cook_time = cookTime.getText().toString().trim();
-                addNewMeal(name,cook_time);
+                if(file1 == null){
+                    MyDialogBuilders.displayPromptForError(getActivity(),"Select an image");
+                }
+                else if (name.isEmpty()){
+                    MyDialogBuilders.displayPromptForError(getActivity(),"Enter meal name");
+                }
+                else if (cook_time.isEmpty()){
+                    MyDialogBuilders.displayPromptForError(getActivity(),"Enter cook time");
+                }
+                else {
+                    addNewMeal(name,cook_time);
+                }
             }
         });
 
@@ -309,6 +317,34 @@ public class MealFragment extends Fragment implements View.OnClickListener{
         alertDialogAddMeal = alertDialogBuilder.create();
         alertDialogAddMeal.setCancelable(true);
         alertDialogAddMeal.show();
+    }
+
+    private void setUpSuggestDialog(){
+        suggestMealView = inflaterd.inflate(R.layout.dialog_suggest, null);
+        EditText numberPeople = suggestMealView.findViewById(R.id.numberPeople);
+        Button btnContinue = suggestMealView.findViewById(R.id.btnContinue);
+
+        btnContinue.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String people = numberPeople.getText().toString().trim();
+                if(people.isEmpty()){
+                    MyDialogBuilders.displayPromptForError(getActivity(),"Enter number of people to be served.");
+                }
+                else {
+                    Intent intent = new Intent(getContext(), SuggestMealActivity.class);
+                    intent.putExtra("people", people);
+                    startActivity(intent);
+                }
+            }
+        });
+
+
+        //Set up the Dialog
+        alertDialogBuilder.setView(suggestMealView);
+        alertDialogSuggestMeal = alertDialogBuilder.create();
+        alertDialogSuggestMeal.setCancelable(true);
+        alertDialogSuggestMeal.show();
     }
 
     private void showDialog(String message) {
@@ -370,17 +406,17 @@ public class MealFragment extends Fragment implements View.OnClickListener{
             if (holder instanceof ItemViewHolder) {
                 ItemViewHolder itemViewHolder = (ItemViewHolder) holder;
                 dataModel = dataList.get(position);
-
+                itemViewHolder.cookTime.setText("Cook time: "+dataModel.getCook_time());
+                itemViewHolder.meal_name.setText(dataModel.getName());
+                Picasso.with(getContext()).load(AppConfig.HOST+dataModel.getImage())
+                        .placeholder(R.drawable.no_image)
+                        .error(R.drawable.no_image)
+                        .into(itemViewHolder.meal_image);
             }
             else if (holder instanceof HomeFragment.MyAdapter.FooterViewHolder) {
                 FooterViewHolder footerViewHolder = (FooterViewHolder) holder;
                 footerViewHolder.progressBar.setIndeterminate(true);
-                if (isLastPage){
-                    footerViewHolder.progressBar.setVisibility(View.GONE);
-                }
-                else {
-                    footerViewHolder.progressBar.setVisibility(View.VISIBLE);
-                }
+                footerViewHolder.progressBar.setVisibility(View.GONE);
             }
 
 
@@ -393,24 +429,22 @@ public class MealFragment extends Fragment implements View.OnClickListener{
         }
 
         public class ItemViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
-            public ImageView container_image;
-            public TextView container_name,remaining,item,percent;
+            public ImageView meal_image;
+            public TextView meal_name,cookTime;
             public View view;
             public ItemViewHolder(View v) {
                 super(v);
                 v.setOnClickListener(this);
-                container_image= v.findViewById(R.id.container_image);
-                container_name= v.findViewById(R.id.container_name);
-                remaining= v.findViewById(R.id.remaining);
-                item= v.findViewById(R.id.item);
-                percent= v.findViewById(R.id.percent);
+                meal_image = v.findViewById(R.id.meal_image);
+                meal_name = v.findViewById(R.id.meal_name);
+                cookTime = v.findViewById(R.id.cookTime);
                 view = v;
             }
 
             @Override
             public void onClick(View view) {
                 dataModel = dataList.get(getAdapterPosition());
-
+                setUpAddMealDialog(dataModel.getMeal_id(), dataModel.getImage(), dataModel.getName(), dataModel.getCook_time());
             }
         }
 
@@ -431,11 +465,9 @@ public class MealFragment extends Fragment implements View.OnClickListener{
     public class MyAdapterA extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         private static final int TYPE_ITEM = 0;
         private static final int TYPE_FOOTER = 1;
-        private List<IngredientModel> dataList;
         private IngredientModel dataModel;
 
-        public MyAdapterA(List<IngredientModel> mList) {
-            this.dataList = mList;
+        public MyAdapterA() {
         }
 
         @Override
@@ -447,7 +479,7 @@ public class MealFragment extends Fragment implements View.OnClickListener{
             return TYPE_ITEM;
         }
         private boolean isPositionFooter(int position) {
-            return position > dataList.size();
+            return position > myListA.size();
         }
 
         @Override
@@ -475,7 +507,7 @@ public class MealFragment extends Fragment implements View.OnClickListener{
         public void onBindViewHolder(final RecyclerView.ViewHolder holder, final int position) {
             if (holder instanceof ItemViewHolder) {
                 ItemViewHolder itemViewHolder = (ItemViewHolder) holder;
-                dataModel = dataList.get(position);
+                dataModel = myListA.get(position);
                 Picasso.with(getContext()).load(dataModel.getImage())
                         .placeholder(R.drawable.no_image)
                         .error(R.drawable.no_image)
@@ -483,6 +515,7 @@ public class MealFragment extends Fragment implements View.OnClickListener{
                 itemViewHolder.meal_name.setText(dataModel.getName());
                 itemViewHolder.unitText.setText(dataModel.getUnit());
                 itemViewHolder.isAdded.setChecked(dataModel.isChecked());
+                itemViewHolder.editText.setText(String.valueOf(dataModel.getQuantity()));
                 itemViewHolder.isAdded.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                     @Override
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -520,7 +553,7 @@ public class MealFragment extends Fragment implements View.OnClickListener{
 
         @Override
         public int getItemCount() {
-            return this.dataList.size();
+            return myListA.size();
         }
 
         public class ItemViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
@@ -542,7 +575,7 @@ public class MealFragment extends Fragment implements View.OnClickListener{
 
             @Override
             public void onClick(View view) {
-                dataModel = dataList.get(getAdapterPosition());
+                dataModel = myListA.get(getAdapterPosition());
 
             }
         }
@@ -581,7 +614,7 @@ public class MealFragment extends Fragment implements View.OnClickListener{
                                     String unit = jobj.getString("unit");
                                     String name = jobj.getString("name");
                                     boolean is_added = jobj.getBoolean("is_added");
-                                    double quantity = 0.0;
+                                    double quantity = Double.parseDouble(jobj.getString("quantity"));
                                     IngredientModel ingredientModel = new IngredientModel(image,name,container_id,quantity, is_added,unit);
                                     myListA.add(ingredientModel);
 
@@ -633,19 +666,24 @@ public class MealFragment extends Fragment implements View.OnClickListener{
         showDialog("Please wait...");
 
         OkHttpClient okHttpClient = new OkHttpClient();
-
         MultipartBody.Builder builder = new MultipartBody.Builder();
         builder.setType(MultipartBody.FORM);
         builder.addFormDataPart("image", file1.getName(), okhttp3.RequestBody.create(MediaType.parse(content_type1), file1));
         builder.addFormDataPart("name", name);
         builder.addFormDataPart("cook_time", cook_time);
 
+        String ingredentsText = "";
         for(int i = 0; i< myListA.size(); i++){
             IngredientModel ingredientModel = myListA.get(i);
             if(ingredientModel.isChecked()){
-                builder.addFormDataPart("ingredient", ingredientModel.getContainer_id()+"|"+ingredientModel.getQuantity());
+                ingredentsText = ingredentsText+ingredientModel.getContainer_id()+"|"+ingredientModel.getQuantity()+"*";
+
             }
         }
+        System.out.println(ingredentsText);
+        ingredentsText= ingredentsText.substring(0, ingredentsText.length() - 1);
+        System.out.println(ingredentsText);
+        builder.addFormDataPart("ingredient", ingredentsText);
 
         RequestBody requestBody = builder.build();
 
@@ -679,7 +717,7 @@ public class MealFragment extends Fragment implements View.OnClickListener{
                     }
                 });
                 try {
-                    //System.out.println(response.body().string());
+
                     JSONObject jObj = new JSONObject(response.body().string());
 
                     if (jObj.has("errors")) {
@@ -718,5 +756,86 @@ public class MealFragment extends Fragment implements View.OnClickListener{
         });
 
 
+    }
+
+    private void getMeals(){
+        indeterminate_progress.setVisibility(View.VISIBLE);
+        JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, AppConfig.GET_MEAL_LIST,null, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                indeterminate_progress.setVisibility(View.GONE);
+                try {
+                    if (response.has("status")){
+                        int status = response.getInt("status");
+                        if (status == 1) {
+                            JSONArray ja = response.getJSONArray("data");
+                            if (ja.length() > 0){
+                                for (int i = 0; i < ja.length(); i++) {
+                                    JSONObject jobj = ja.getJSONObject(i);
+                                    String meal_id = jobj.getString("meal_id");
+                                    String image = jobj.getString("image");
+                                    String name = jobj.getString("name");
+                                    String cook_time = jobj.getString("cook_time");
+                                    MealModel mealModel = new MealModel(meal_id,image,name,cook_time);
+                                    myList.add(mealModel);
+                                }
+                                mAdapter.notifyDataSetChanged();
+                                loadingSuccess();
+                            }
+                            else {
+                                loadingFailed(response.getString("message"),true);
+                            }
+                        }
+                        else {
+                            loadingFailed(response.getString("message"),false);
+                        }
+                    }
+                    else {
+                        loadingFailed("Server error",false);
+                    }
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        }, new Response.ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                indeterminate_progress.setVisibility(View.GONE);
+                loadingFailed("Server error",false);
+            }
+        }){
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String>  params = new HashMap<String, String>();
+                params.put("authorization", sessionManager.getAuth());
+                return params;
+            }
+        };
+
+        AppController.getInstance().addToRequestQueue(jsonRequest);
+    }
+
+    private void loadingFailed(String message, Boolean is_list_empty){
+        container.setVisibility(View.GONE);
+        indeterminate_progress.setVisibility(View.GONE);
+        error_image.setVisibility(View.VISIBLE);
+        textError.setText(message);
+        if(is_list_empty){
+            imageError.setVisibility(View.GONE);
+            try_again_button.setVisibility(View.GONE);
+        }
+        else {
+            imageError.setVisibility(View.VISIBLE);
+            try_again_button.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void loadingSuccess(){
+        container.setVisibility(View.VISIBLE);
+        indeterminate_progress.setVisibility(View.GONE);
+        error_image.setVisibility(View.GONE);
     }
 }

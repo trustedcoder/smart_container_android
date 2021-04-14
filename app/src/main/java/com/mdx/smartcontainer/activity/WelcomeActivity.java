@@ -56,7 +56,6 @@ public class WelcomeActivity extends AppCompatActivity implements View.OnClickLi
     private EditText nameEditTextSignUp,emailEditTextSignUp,
             passwordEditTextSignUp,emailEditTextSignIn,
             passwordEditTextSignIn,emailEditTextforgot,emailEditTextsocial,nameEditText;
-    private TextView forgortTextViewPassword;
     private LinearLayout signIn,signUp;
     private ProgressBar progress_bar;
     private CallbackManager callbackManager;
@@ -99,7 +98,6 @@ public class WelcomeActivity extends AppCompatActivity implements View.OnClickLi
         initializeViews();
         setUpSignUpDialog();
         setUpSignInDialog();
-        setUpforgotPassDialog();
     }
 
     private void initializeViews(){
@@ -224,7 +222,6 @@ public class WelcomeActivity extends AppCompatActivity implements View.OnClickLi
         loginView = inflater.inflate(R.layout.sign_in, null);
         emailEditTextSignIn = loginView.findViewById(R.id.email);
         passwordEditTextSignIn = loginView.findViewById(R.id.password);
-        forgortTextViewPassword = loginView.findViewById(R.id.forgot);
         btnLogin = loginView.findViewById(R.id.btnLogin);
         signUp = loginView.findViewById(R.id.signUp);
 
@@ -251,13 +248,6 @@ public class WelcomeActivity extends AppCompatActivity implements View.OnClickLi
             }
         });
 
-        forgortTextViewPassword.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                alertDialogSignIn.cancel();
-                alertDialogForgot.show();
-            }
-        });
 
         signUp.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -268,71 +258,6 @@ public class WelcomeActivity extends AppCompatActivity implements View.OnClickLi
         });
     }
 
-    private void setUpforgotPassDialog(){
-        forgotView = inflater.inflate(R.layout.forgot_pass, null);
-        emailEditTextforgot = forgotView.findViewById(R.id.email);
-        btnSubmit = forgotView.findViewById(R.id.btnSubmit);
-
-        //Set up the Dialog
-        alertDialogBuilder.setView(forgotView);
-        alertDialogForgot = alertDialogBuilder.create();
-        alertDialogForgot.setCancelable(true);
-
-        btnSubmit.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                String email = emailEditTextforgot.getText().toString().trim();
-                if (email.isEmpty()){
-                    MyDialogBuilders.displayPromptForError(WelcomeActivity.this,"Email is empty!");
-                }
-                else {
-                    alertDialogForgot.cancel();
-                    forgotPassword(email);
-                }
-            }
-        });
-
-    }
-
-    private void forgotPassword(String email) {
-        showDialog("Please wait...");
-        Map<String, String> params = new HashMap<String, String>();
-        params.put("email", email);
-        JSONObject parameters= new JSONObject(params);
-        JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.POST, AppConfig.FORGOT_PASSWORD,parameters, new Response.Listener<JSONObject>() {
-            @Override
-            public void onResponse(JSONObject response) {
-                hideDialog();
-                try {
-                    if (response.has("status")){
-                        int status = response.getInt("status");
-                        if (status == 1) {
-                            MyDialogBuilders.displayPromptForError(WelcomeActivity.this,response.getString("message"));
-                        }
-                        else {
-                            MyDialogBuilders.displayPromptForError(WelcomeActivity.this,response.getString("message"));
-                        }
-                    }
-                    else {
-                        MyDialogBuilders.displayPromptForError(WelcomeActivity.this,getResources().getString(R.string.accuracy));
-                    }
-
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
-            }
-        }, new Response.ErrorListener() {
-
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                hideDialog();
-                MyDialogBuilders.displayPromptForError(WelcomeActivity.this,"Error connecting");
-            }
-        });
-
-        AppController.getInstance().addToRequestQueue(jsonRequest);
-    }
 
     private void setUpPreRegisterDialog(final String name, String email){
         preSignUpView = inflater.inflate(R.layout.pre_sign_up, null);

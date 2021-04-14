@@ -816,7 +816,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
                     if (response.has("status")){
                         int status = response.getInt("status");
                         if (status == 1) {
-                            isLastPage = response.getBoolean("is_last_page");
+                            isLastPage = true;
                             pageCount = pageCount+20;
                             JSONArray ja = response.getJSONArray("data");
                             if (ja.length() > 0){

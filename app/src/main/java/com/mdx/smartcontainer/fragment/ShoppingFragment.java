@@ -182,8 +182,6 @@ public class ShoppingFragment extends Fragment implements View.OnClickListener{
 
 
         }
-
-
         @Override
         public int getItemCount() {
             return this.dataList.size();
@@ -215,8 +213,6 @@ public class ShoppingFragment extends Fragment implements View.OnClickListener{
             }
 
         }
-
-
     }
 
     private void getShopping(){

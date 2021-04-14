@@ -22,4 +22,6 @@ public class AppConfig {
     public static String SET_BOUGHT = HOST+"shopping/set_bought";
     public static String GET_ALL_INGREDIENT = HOST+"meal/get_all_ingredient";
     public static String NEW_MEAL_SAVE = HOST+"meal/new_meal_save";
+    public static String GET_MEAL_LIST = HOST+"meal/get_meal_list";
+    public static String SUGGEST_MEAL_LIST = HOST+"meal/suggest_meal_list";
 }
